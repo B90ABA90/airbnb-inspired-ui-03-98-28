@@ -1,0 +1,54 @@
+
+/* Désactiver complètement le mode sombre et appliquer des styles en mode clair */
+:root {
+  /* Couleurs de base */
+  --background: #F1F0FB !important;
+  --foreground: #1A1F2C !important;
+  --card: #FFFFFF !important;
+  --card-foreground: #1A1F2C !important;
+  --popover: #FFFFFF !important;
+  --popover-foreground: #1A1F2C !important;
+  --muted: #F1F5F9 !important;
+  --muted-foreground: #64748B !important;
+  --border: #E2E8F0 !important;
+  --input: #E2E8F0 !important;
+  
+  /* Menus et popups */
+  --dropdown-bg: #FFFFFF !important;
+  --dropdown-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  
+  /* Force le thème clair */
+  color-scheme: light !important;
+}
+
+/* Supprimer toute classe dark du html */
+html.dark {
+  --background: #F1F0FB !important;
+  --foreground: #1A1F2C !important;
+}
+
+/* Style pour assurer le contraste des textes sur fond clair */
+body, .app-container, main, header, footer {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+/* Correction pour les menus déroulants */
+[data-radix-popper-content-wrapper],
+.dropdown-content,
+[role="menu"] {
+  background-color: white !important;
+  color: #1A1F2C !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: var(--dropdown-shadow) !important;
+}
+
+/* Correction pour les textes qui seraient en blanc sur fond clair */
+* {
+  color-scheme: light !important;
+}
+
+/* Retirer tous les éléments spécifiques au mode sombre */
+.dark-only, [data-theme="dark"] * {
+  display: none !important;
+}

@@ -1,5 +1,9 @@
+
 /* Base styles and variables */
 @import './styles/base.css';
+
+/* Light mode override - forcer le mode clair */
+@import './styles/theme/light-override.css';
 
 /* Layout styles */
 @import './styles/layout/container.css';
@@ -85,3 +89,4 @@ button {
   font-size: 0.875rem !important;
   line-height: 1.25rem !important;
 }
+

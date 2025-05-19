@@ -47,6 +47,12 @@ export const useSettingsStorage = () => {
       // S'assurer que le mode sombre est toujours désactivé
       parsedSettings.darkMode = false;
       
+      // Appliquer immédiatement les variables CSS
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.style.setProperty('--background', '#F1F0FB');
+      document.documentElement.style.setProperty('--foreground', '#1A1F2C');
+      
       setSettings(parsedSettings as SiteSettings);
       console.log("Paramètres chargés avec succès");
     } catch (error) {
@@ -117,6 +123,13 @@ export const useSettingsStorage = () => {
         ...newSettings,
         darkMode: false
       };
+      
+      // Appliquer immédiatement les variables CSS
+      if (newSettings.primaryColor || newSettings.secondaryColor) {
+        document.documentElement.style.setProperty('--primary', updatedSettings.primaryColor);
+        document.documentElement.style.setProperty('--secondary', updatedSettings.secondaryColor);
+      }
+      
       console.log("Paramètres mis à jour:", updatedSettings);
       return updatedSettings;
     });
@@ -136,6 +149,15 @@ export const useSettingsStorage = () => {
     localStorage.removeItem('site_favicon');
     
     setSettings({...defaultSettings, darkMode: false} as SiteSettings);
+    
+    // Appliquer immédiatement les variables CSS par défaut
+    document.documentElement.classList.remove('dark');
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.documentElement.style.setProperty('--background', '#F1F0FB');
+    document.documentElement.style.setProperty('--foreground', '#1A1F2C');
+    document.documentElement.style.setProperty('--primary', defaultSettings.primaryColor);
+    document.documentElement.style.setProperty('--secondary', defaultSettings.secondaryColor);
+    
     console.log("Paramètres réinitialisés");
   };
 
