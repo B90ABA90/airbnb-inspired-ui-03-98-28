@@ -72,9 +72,12 @@ export const useStatusMessages = () => {
     }
   }, [currentIndex, isDismissed, loadData]);
 
-  // Charger les messages au montage du composant
+  // Charger les messages au montage du composant et lors des changements
   useEffect(() => {
-    loadMessages();
+    // Éviter de recharger si déjà chargé
+    if (!hasLoaded) {
+      loadMessages();
+    }
     
     // Ajouter un écouteur d'événement pour les mises à jour du stockage
     const handleStorageChange = () => {
@@ -90,7 +93,7 @@ export const useStatusMessages = () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(intervalId);
     };
-  }, [loadMessages]);
+  }, [hasLoaded, loadMessages]);
 
   // Fonction pour passer au message suivant
   const nextMessage = useCallback(() => {
@@ -105,8 +108,13 @@ export const useStatusMessages = () => {
     setIsVisible(false);
   }, []);
 
+  // Récupérer le message actuel de manière sécurisée
+  const currentMessage = messages.length > 0 && currentIndex < messages.length
+    ? messages[currentIndex]
+    : null;
+
   return {
-    currentMessage: messages[currentIndex],
+    currentMessage,
     hasMessages: messages.length > 0,
     isVisible,
     hasLoaded,

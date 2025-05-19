@@ -40,31 +40,40 @@ export function ThemeProvider({
     // Stocker le thème en local storage
     localStorage.setItem(storageKey, 'light');
     
-    // Créer un nouvel élément style avec un ID unique pour faciliter sa suppression plus tard
+    // Gérer les styles globaux pour forcer le mode clair
     const styleId = 'theme-override-style';
+    
+    // Vérifier si l'élément style existe déjà
     let styleElement = document.getElementById(styleId) as HTMLStyleElement;
     
-    // Supprimer l'ancien élément style s'il existe
     if (styleElement) {
-      styleElement.remove();
+      // Mettre à jour le contenu si l'élément existe déjà
+      styleElement.textContent = `
+        .dark {
+          display: none !important;
+        }
+        
+        [data-theme="dark"] {
+          --background: 0 0% 100% !important;
+          --foreground: 222.2 84% 4.9% !important;
+        }
+      `;
+    } else {
+      // Créer un nouvel élément style
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      styleElement.textContent = `
+        .dark {
+          display: none !important;
+        }
+        
+        [data-theme="dark"] {
+          --background: 0 0% 100% !important;
+          --foreground: 222.2 84% 4.9% !important;
+        }
+      `;
+      document.head.appendChild(styleElement);
     }
-    
-    // Créer un nouvel élément style
-    styleElement = document.createElement('style');
-    styleElement.id = styleId;
-    styleElement.textContent = `
-      .dark {
-        display: none !important;
-      }
-      
-      [data-theme="dark"] {
-        --background: 0 0% 100% !important;
-        --foreground: 222.2 84% 4.9% !important;
-      }
-    `;
-    document.head.appendChild(styleElement);
-    
-    // Pas besoin de nettoyer puisque nous voulons que ces styles persistent
   }, [storageKey]);
 
   const value: ThemeContextType = {

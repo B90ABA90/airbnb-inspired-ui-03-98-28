@@ -8,8 +8,6 @@ import { CloseButton } from './CloseButton';
 
 export const StatusBanner: React.FC = () => {
   const { 
-    messages,
-    currentIndex,
     isVisible,
     hasLoaded,
     isDismissed,
@@ -18,7 +16,7 @@ export const StatusBanner: React.FC = () => {
   } = useStatusMessages();
   
   // Attendre que les messages se chargent et retourner null si pas visible
-  if (!hasLoaded || !isVisible || isDismissed || !messages || messages.length === 0) {
+  if (!hasLoaded || !isVisible || isDismissed) {
     return null;
   }
 

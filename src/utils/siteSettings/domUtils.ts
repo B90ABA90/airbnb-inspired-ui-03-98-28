@@ -23,8 +23,10 @@ export const applySettingsToDOM = (settings: SiteSettings): void => {
   document.documentElement.classList.remove('dark');
   document.documentElement.setAttribute('data-theme', 'light');
   
-  // Créer ou mettre à jour l'élément style avec un ID unique
+  // Identifier unique pour l'élément de style
   const styleId = 'settings-style-override';
+  
+  // Vérifier si l'élément style existe déjà
   let styleElement = document.getElementById(styleId) as HTMLStyleElement;
   
   if (styleElement) {
