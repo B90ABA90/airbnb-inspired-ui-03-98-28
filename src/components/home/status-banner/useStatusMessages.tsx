@@ -64,8 +64,6 @@ export const useStatusMessages = () => {
       }
       
       setHasLoaded(true);
-      
-      console.info("Statuts actifs chargés:", activeMessages.length);
     } catch (error) {
       console.error("Erreur lors du chargement des messages de statut:", error);
       setMessages([]);

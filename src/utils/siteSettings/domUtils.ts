@@ -23,15 +23,30 @@ export const applySettingsToDOM = (settings: SiteSettings): void => {
   document.documentElement.classList.remove('dark');
   document.documentElement.setAttribute('data-theme', 'light');
   
-  // Forcer le rechargement des styles
-  const styleElement = document.createElement('style');
-  styleElement.textContent = `
-    html, body {
-      background-color: var(--background) !important;
-      color: var(--foreground) !important;
-    }
-  `;
-  document.head.appendChild(styleElement);
+  // Créer ou mettre à jour l'élément style avec un ID unique
+  const styleId = 'settings-style-override';
+  let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+  
+  if (styleElement) {
+    // Mettre à jour le contenu si l'élément existe déjà
+    styleElement.textContent = `
+      html, body {
+        background-color: var(--background) !important;
+        color: var(--foreground) !important;
+      }
+    `;
+  } else {
+    // Créer un nouvel élément style si nécessaire
+    styleElement = document.createElement('style');
+    styleElement.id = styleId;
+    styleElement.textContent = `
+      html, body {
+        background-color: var(--background) !important;
+        color: var(--foreground) !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+  }
 
   console.log('Settings applied to DOM (light mode):', settings);
 };

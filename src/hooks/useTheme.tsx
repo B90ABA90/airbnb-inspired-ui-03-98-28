@@ -40,9 +40,19 @@ export function ThemeProvider({
     // Stocker le thème en local storage
     localStorage.setItem(storageKey, 'light');
     
-    // Désactiver les styles liés au mode sombre en CSS
-    const style = document.createElement('style');
-    style.textContent = `
+    // Créer un nouvel élément style avec un ID unique pour faciliter sa suppression plus tard
+    const styleId = 'theme-override-style';
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
+    
+    // Supprimer l'ancien élément style s'il existe
+    if (styleElement) {
+      styleElement.remove();
+    }
+    
+    // Créer un nouvel élément style
+    styleElement = document.createElement('style');
+    styleElement.id = styleId;
+    styleElement.textContent = `
       .dark {
         display: none !important;
       }
@@ -52,11 +62,9 @@ export function ThemeProvider({
         --foreground: 222.2 84% 4.9% !important;
       }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(styleElement);
     
-    return () => {
-      document.head.removeChild(style);
-    };
+    // Pas besoin de nettoyer puisque nous voulons que ces styles persistent
   }, [storageKey]);
 
   const value: ThemeContextType = {
