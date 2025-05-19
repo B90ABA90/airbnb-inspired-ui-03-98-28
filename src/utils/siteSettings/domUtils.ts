@@ -49,6 +49,19 @@ export const applySettingsToDOM = (settings: SiteSettings): void => {
     `;
     document.head.appendChild(styleElement);
   }
+  
+  // Appliquer le favicon depuis les paramètres
+  if (settings.favicon) {
+    let faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+    if (!faviconLink) {
+      faviconLink = document.createElement('link');
+      faviconLink.rel = 'icon';
+      document.head.appendChild(faviconLink);
+    }
+    faviconLink.href = settings.favicon;
+    faviconLink.type = 'image/png';
+    console.log('Favicon applied from settings:', settings.favicon);
+  }
 
   console.log('Settings applied to DOM (light mode):', settings);
 };

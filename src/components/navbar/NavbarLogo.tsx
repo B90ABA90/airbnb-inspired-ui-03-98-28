@@ -16,33 +16,16 @@ export const NavbarLogo = () => {
     try {
       // Use a default logo if none is provided
       const defaultLogo = "/lovable-uploads/840dfb44-1c4f-4475-9321-7f361be73327.png";
-      let logoSrc = "";
       
-      if (settings.logo === 'stored_separately') {
-        // Récupérer la version la plus récente du logo
-        const timestamp = localStorage.getItem('site_logo_timestamp');
-        let storedLogo;
-        
-        if (timestamp) {
-          storedLogo = localStorage.getItem(`site_logo_${timestamp}`);
-        }
-        
-        // Si pas trouvé avec timestamp, essayer la version standard
-        if (!storedLogo) {
-          storedLogo = localStorage.getItem('site_logo');
-        }
-        
-        logoSrc = storedLogo || defaultLogo;
-        console.log("Logo chargé depuis le stockage local:", logoSrc.substring(0, 30) + "...");
-      } else if (settings.logo) {
-        logoSrc = settings.logo || defaultLogo;
-        console.log("Logo chargé depuis les paramètres:", logoSrc.substring(0, 30) + "...");
+      // Prioritize the logo from settings
+      if (settings.logo) {
+        console.log("Logo chargé depuis les paramètres:", settings.logo.substring(0, 30) + "...");
+        setCurrentLogo(settings.logo);
       } else {
-        logoSrc = defaultLogo;
         console.log("Logo par défaut utilisé");
+        setCurrentLogo(defaultLogo);
       }
       
-      setCurrentLogo(logoSrc);
       setLogoLoaded(false);
       setLogoError(false);
     } catch (error) {

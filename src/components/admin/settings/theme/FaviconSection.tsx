@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { ImageUploadField } from '../ImageUploadField';
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +22,19 @@ export const FaviconSection: React.FC<FaviconSectionProps> = ({
     setFaviconError(false);
     setFaviconLoaded(false);
     console.log("Favicon URL mise à jour:", faviconUrl?.substring(0, 30) + "...");
+    
+    // Apply favicon directly to document
+    if (faviconUrl) {
+      let faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
+      if (!faviconLink) {
+        faviconLink = document.createElement('link');
+        faviconLink.rel = 'icon';
+        document.head.appendChild(faviconLink);
+      }
+      faviconLink.href = faviconUrl;
+      faviconLink.type = 'image/png';
+      console.log('Favicon applied from component:', faviconUrl);
+    }
   }, [faviconUrl]);
   
   return (
