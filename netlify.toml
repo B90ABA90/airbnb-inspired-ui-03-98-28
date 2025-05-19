@@ -12,6 +12,14 @@
   to = "/index.html"
   status = 200
 
+# Allow CORS for Supabase requests
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+
 # Configuration des en-têtes pour améliorer la mise en cache
 [[headers]]
   for = "/*"
