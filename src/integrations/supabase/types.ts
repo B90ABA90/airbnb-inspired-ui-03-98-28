@@ -9,7 +9,129 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      jobs: {
+        Row: {
+          applications: Json[] | null
+          bathrooms: number | null
+          bedrooms: number | null
+          contract: string
+          created_at: string
+          deadline: string
+          description: string
+          domain: string
+          id: string
+          image: string | null
+          images: string[] | null
+          is_housing_offer: boolean | null
+          location: string
+          positions: number | null
+          price: number | null
+          publish_date: string | null
+          requirements: string | null
+          salary: Json
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          applications?: Json[] | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          contract: string
+          created_at?: string
+          deadline: string
+          description: string
+          domain: string
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          is_housing_offer?: boolean | null
+          location: string
+          positions?: number | null
+          price?: number | null
+          publish_date?: string | null
+          requirements?: string | null
+          salary?: Json
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          applications?: Json[] | null
+          bathrooms?: number | null
+          bedrooms?: number | null
+          contract?: string
+          created_at?: string
+          deadline?: string
+          description?: string
+          domain?: string
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          is_housing_offer?: boolean | null
+          location?: string
+          positions?: number | null
+          price?: number | null
+          publish_date?: string | null
+          requirements?: string | null
+          salary?: Json
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      listings: {
+        Row: {
+          created_at: string
+          dates: string | null
+          description: string | null
+          host: Json
+          id: string
+          image: string | null
+          images: string[] | null
+          location: string
+          map_location: string | null
+          neighborhood: string | null
+          price: number
+          rating: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dates?: string | null
+          description?: string | null
+          host?: Json
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          location: string
+          map_location?: string | null
+          neighborhood?: string | null
+          price: number
+          rating?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dates?: string | null
+          description?: string | null
+          host?: Json
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          location?: string
+          map_location?: string | null
+          neighborhood?: string | null
+          price?: number
+          rating?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

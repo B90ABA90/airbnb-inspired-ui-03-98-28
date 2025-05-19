@@ -1,194 +1,158 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Listing } from "@/types/listing";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { loadListings, saveListings } from "../useListingStorage";
-import { processStoredImages, saveListingImages, clearListingImages, purgeAllListingImages } from "./listingImageUtils";
+import { v4 as uuidv4 } from "uuid";
+import { processStoredImages } from "./listingImageUtils";
+import { saveListings } from "../useListingStorage";
 
 /**
- * Hook for listing mutation operations (add, update, delete)
+ * Hook for mutations related to listings (add, update, delete)
  */
 export const useListingMutations = () => {
   const queryClient = useQueryClient();
 
-  // Add new listing
+  // Add a new listing
   const addListing = useMutation({
     mutationFn: async (newListing: Omit<Listing, "id">) => {
       try {
-        const currentListings = loadListings();
-        
-        const id = Math.random().toString(36).substr(2, 9);
-        
-        const listing: Listing = {
+        // Générer un ID si nécessaire
+        const listingWithId = {
           ...newListing,
-          id,
-          rating: 0,
-          dates: new Date().toLocaleDateString(),
-          host: newListing.host || { name: "Hôte", image: "/placeholder.svg" }
+          id: uuidv4()
         };
+
+        // Insertion dans Supabase
+        const { data, error } = await supabase
+          .from("listings")
+          .insert([{
+            id: listingWithId.id,
+            title: listingWithId.title,
+            description: listingWithId.description,
+            price: listingWithId.price,
+            location: listingWithId.location,
+            image: listingWithId.image,
+            images: listingWithId.images,
+            rating: listingWithId.rating || 0,
+            dates: listingWithId.dates || "",
+            host: listingWithId.host,
+            map_location: listingWithId.mapLocation,
+            neighborhood: listingWithId.location.split(',')[0]?.trim()
+          }])
+          .select();
+
+        if (error) throw error;
         
-        console.log("Images fournies lors de la création:", newListing.images);
-        console.log("Image principale fournie lors de la création:", newListing.image);
+        // Fallback: Aussi sauvegarder localement
+        const currentListings = queryClient.getQueryData<Listing[]>(["listings"]) || [];
+        const processedListing = processStoredImages(listingWithId);
+        const updatedListings = [...currentListings, processedListing];
+        saveListings(updatedListings);
         
-        // Ensure images array exists
-        if (!listing.images) {
-          listing.images = [];
-        }
-        
-        // Save images to localStorage
-        if (newListing.images && newListing.images.length > 0) {
-          listing.images = [...newListing.images];
-          saveListingImages(id, listing.images);
-        }
-        
-        // Set main image
-        if (newListing.image) {
-          listing.image = newListing.image;
-        } else if (listing.images && listing.images.length > 0) {
-          listing.image = listing.images[0];
-        }
-        
-        console.log("Données finales du nouveau listing:", listing);
-        
-        currentListings.push(listing);
-        saveListings(currentListings);
-        
-        return listing;
+        return processedListing;
       } catch (error) {
         console.error("Erreur lors de l'ajout du listing:", error);
         throw error;
       }
     },
-    onSuccess: (newListing) => {
-      queryClient.setQueryData(["listings"], (old: Listing[] = []) => [...old, newListing]);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["listings"] });
       toast.success("Logement ajouté avec succès");
     },
-    onError: () => {
-      toast.error("Erreur lors de l'ajout du logement");
-    },
+    onError: (error) => {
+      toast.error(`Erreur lors de l'ajout: ${error.message}`);
+    }
   });
 
-  // Update existing listing
+  // Update an existing listing
   const updateListing = useMutation({
     mutationFn: async (updatedListing: Listing) => {
       try {
-        const currentListings = loadListings();
-        const index = currentListings.findIndex(listing => listing.id === updatedListing.id);
-        
-        if (index !== -1) {
-          // Create backup of the existing listing
-          const existingListing = currentListings[index];
-          localStorage.setItem(`listing_backup_${existingListing.id}`, JSON.stringify(existingListing));
-          
-          console.log("Images fournies pour la mise à jour:", updatedListing.images);
-          console.log("Image principale fournie pour la mise à jour:", updatedListing.image);
-          
-          // Clear existing images first if new images are provided
-          if (updatedListing.images && updatedListing.images.length > 0) {
-            clearListingImages(updatedListing.id);
-            saveListingImages(updatedListing.id, updatedListing.images);
-          } else if (existingListing.images && existingListing.images.length > 0) {
-            // Keep existing images if no new ones provided
-            updatedListing.images = [...existingListing.images];
-          } else {
-            updatedListing.images = [];
-          }
-          
-          // Handle main image
-          if (updatedListing.image) {
-            localStorage.setItem(`listing_image_${updatedListing.id}`, updatedListing.image);
-          } else if (updatedListing.images && updatedListing.images.length > 0) {
-            updatedListing.image = updatedListing.images[0];
-          } else if (existingListing.image) {
-            updatedListing.image = existingListing.image;
-          }
-          
-          currentListings[index] = updatedListing;
-          saveListings(currentListings);
-          return updatedListing;
-        }
-        
-        throw new Error(`Listing avec ID ${updatedListing.id} non trouvé`);
-      } catch (error) {
-        console.error(`Erreur lors de la mise à jour du listing:`, error);
-        throw error;
-      }
-    },
-    onSuccess: (updatedListing) => {
-      queryClient.setQueryData(["listings"], (old: Listing[] = []) =>
-        old.map((listing) =>
-          listing.id === updatedListing.id ? updatedListing : listing
-        )
-      );
-      queryClient.invalidateQueries({ queryKey: ["listings"] });
-      toast.success("Logement mis à jour avec succès");
-    },
-    onError: () => {
-      toast.error("Erreur lors de la mise à jour du logement");
-    },
-  });
+        const { data, error } = await supabase
+          .from("listings")
+          .update({
+            title: updatedListing.title,
+            description: updatedListing.description,
+            price: updatedListing.price,
+            location: updatedListing.location,
+            image: updatedListing.image,
+            images: updatedListing.images,
+            rating: updatedListing.rating || 0,
+            dates: updatedListing.dates || "",
+            host: updatedListing.host,
+            map_location: updatedListing.mapLocation,
+            neighborhood: updatedListing.location.split(',')[0]?.trim()
+          })
+          .eq("id", updatedListing.id)
+          .select();
 
-  // Delete listing
-  const deleteListing = useMutation({
-    mutationFn: async (listingId: string) => {
-      const currentListings = loadListings();
-      const index = currentListings.findIndex(listing => listing.id === listingId);
-      if (index !== -1) {
-        const deletedListing = currentListings[index];
-        
-        // Create backup before deletion
-        localStorage.setItem(`deleted_listing_${listingId}`, JSON.stringify(deletedListing));
-        
-        // Clear images from storage
-        clearListingImages(listingId);
-        
-        currentListings.splice(index, 1);
-        saveListings(currentListings);
-      }
-      return listingId;
-    },
-    onSuccess: (deletedId) => {
-      queryClient.setQueryData(["listings"], (old: Listing[] = []) =>
-        old.filter((listing) => listing.id !== deletedId)
-      );
-      queryClient.invalidateQueries({ queryKey: ["listings"] });
-      toast.success("Logement supprimé avec succès");
-    },
-    onError: () => {
-      toast.error("Erreur lors de la suppression du logement");
-    },
-  });
+        if (error) throw error;
 
-  // Clear all listing images (global operation)
-  const clearAllListingImages = useMutation({
-    mutationFn: async () => {
-      // Purge all images from localStorage
-      try {
-        purgeAllListingImages();
-        
-        // Update all listings to have empty image arrays
-        const currentListings = loadListings();
-        const updatedListings = currentListings.map(listing => ({
-          ...listing,
-          images: [],
-          image: ''
-        }));
-        
+        // Fallback: Aussi mettre à jour localement
+        const currentListings = queryClient.getQueryData<Listing[]>(["listings"]) || [];
+        const processedListing = processStoredImages(updatedListing);
+        const updatedListings = currentListings.map(listing =>
+          listing.id === updatedListing.id ? processedListing : listing
+        );
         saveListings(updatedListings);
-        return true;
+
+        return processedListing;
       } catch (error) {
-        console.error("Erreur lors de la suppression de toutes les images:", error);
+        console.error("Erreur lors de la mise à jour du listing:", error);
         throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["listings"] });
-      toast.success("Toutes les images des logements ont été supprimées");
+      toast.success("Logement mis à jour avec succès");
     },
-    onError: () => {
-      toast.error("Erreur lors de la suppression des images");
-    },
+    onError: (error) => {
+      toast.error(`Erreur lors de la mise à jour: ${error.message}`);
+    }
   });
 
-  return { addListing, updateListing, deleteListing, clearAllListingImages };
+  // Delete a listing
+  const deleteListing = useMutation({
+    mutationFn: async (listingId: string) => {
+      try {
+        const { error } = await supabase
+          .from("listings")
+          .delete()
+          .eq("id", listingId);
+
+        if (error) throw error;
+
+        // Fallback: Aussi supprimer localement
+        const currentListings = queryClient.getQueryData<Listing[]>(["listings"]) || [];
+        const updatedListings = currentListings.filter(listing => listing.id !== listingId);
+        saveListings(updatedListings);
+
+        return listingId;
+      } catch (error) {
+        console.error("Erreur lors de la suppression du listing:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["listings"] });
+      toast.success("Logement supprimé avec succès");
+    },
+    onError: (error) => {
+      toast.error(`Erreur lors de la suppression: ${error.message}`);
+    }
+  });
+
+  const clearAllListingImages = () => {
+    const currentListings = queryClient.getQueryData<Listing[]>(["listings"]) || [];
+    // Cette fonction est gardée pour compatibilité
+    return { mutateAsync: () => Promise.resolve() };
+  };
+
+  return {
+    addListing,
+    updateListing,
+    deleteListing,
+    clearAllListingImages
+  };
 };
