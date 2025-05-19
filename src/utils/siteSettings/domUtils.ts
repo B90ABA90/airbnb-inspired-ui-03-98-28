@@ -50,7 +50,7 @@ export const applySettingsToDOM = (settings: SiteSettings): void => {
     document.head.appendChild(styleElement);
   }
   
-  // Appliquer le favicon depuis les paramètres
+  // Appliquer le favicon depuis les paramètres - Assurer qu'il utilise une URL absolue
   if (settings.favicon) {
     let faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
     if (!faviconLink) {
@@ -58,9 +58,15 @@ export const applySettingsToDOM = (settings: SiteSettings): void => {
       faviconLink.rel = 'icon';
       document.head.appendChild(faviconLink);
     }
-    faviconLink.href = settings.favicon;
+    
+    // Vérifier si le favicon est une URL complète ou une URL relative
+    const faviconUrl = settings.favicon.startsWith('http') || settings.favicon.startsWith('/lovable-uploads/') 
+      ? settings.favicon 
+      : `/lovable-uploads/${settings.favicon.replace(/^\//, '')}`;
+      
+    faviconLink.href = faviconUrl;
     faviconLink.type = 'image/png';
-    console.log('Favicon applied from settings:', settings.favicon);
+    console.log('Favicon applied from settings:', faviconUrl);
   }
 
   console.log('Settings applied to DOM (light mode):', settings);

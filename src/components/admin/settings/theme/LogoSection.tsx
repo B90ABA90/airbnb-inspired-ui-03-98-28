@@ -34,13 +34,21 @@ export const LogoSection = ({
       // Use a default logo if none is provided
       const defaultLogo = "/lovable-uploads/840dfb44-1c4f-4475-9321-7f361be73327.png";
       
+      // Ensure URL is fully qualified
+      const getFullUrl = (url: string) => {
+        if (!url) return defaultLogo;
+        return url.startsWith('http') || url.startsWith('/lovable-uploads/') 
+          ? url 
+          : `/lovable-uploads/${url.replace(/^\//, '')}`;
+      };
+      
       // Prioritize settings.logo or logoUrl
       if (settings.logo) {
         console.log("Utilisation du logo depuis les paramètres");
-        setPreviewUrl(settings.logo);
+        setPreviewUrl(getFullUrl(settings.logo));
       } else if (logoUrl) {
         console.log("Utilisation du logoUrl fourni");
-        setPreviewUrl(logoUrl);
+        setPreviewUrl(getFullUrl(logoUrl));
       } else {
         console.log("Aucun logo trouvé, utilisation du logo par défaut");
         setPreviewUrl(defaultLogo);
@@ -65,7 +73,11 @@ export const LogoSection = ({
     setPreviewUrl("");
     setTimeout(() => {
       const defaultLogo = "/lovable-uploads/840dfb44-1c4f-4475-9321-7f361be73327.png";
-      setPreviewUrl(settings.logo || logoUrl || defaultLogo);
+      const fallbackUrl = settings.logo || logoUrl || defaultLogo;
+      const fullUrl = fallbackUrl.startsWith('http') || fallbackUrl.startsWith('/lovable-uploads/') 
+          ? fallbackUrl 
+          : `/lovable-uploads/${fallbackUrl.replace(/^\//, '')}`;
+      setPreviewUrl(fullUrl);
     }, 100);
   };
   

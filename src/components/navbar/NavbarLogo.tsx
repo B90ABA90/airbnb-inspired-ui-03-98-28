@@ -19,13 +19,19 @@ export const NavbarLogo = () => {
       
       // Prioritize the logo from settings
       if (settings.logo) {
-        console.log("Logo chargé depuis les paramètres:", settings.logo.substring(0, 30) + "...");
-        setCurrentLogo(settings.logo);
+        // Ensure we have a fully qualified URL
+        const logoUrl = settings.logo.startsWith('http') || settings.logo.startsWith('/lovable-uploads/') 
+          ? settings.logo 
+          : `/lovable-uploads/${settings.logo.replace(/^\//, '')}`;
+          
+        console.log("Logo chargé depuis les paramètres:", logoUrl.substring(0, 30) + "...");
+        setCurrentLogo(logoUrl);
       } else {
         console.log("Logo par défaut utilisé");
         setCurrentLogo(defaultLogo);
       }
       
+      // Reset states
       setLogoLoaded(false);
       setLogoError(false);
     } catch (error) {
@@ -39,6 +45,10 @@ export const NavbarLogo = () => {
   const handleLogoError = () => {
     console.error("Error loading logo in navbar:", currentLogo?.substring(0, 30));
     setLogoError(true);
+    // If error loading logo, use default logo
+    if (currentLogo !== "/lovable-uploads/840dfb44-1c4f-4475-9321-7f361be73327.png") {
+      setCurrentLogo("/lovable-uploads/840dfb44-1c4f-4475-9321-7f361be73327.png");
+    }
   };
   
   return (

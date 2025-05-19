@@ -16,35 +16,50 @@ export const FaviconSection: React.FC<FaviconSectionProps> = ({
 }) => {
   const [faviconError, setFaviconError] = useState(false);
   const [faviconLoaded, setFaviconLoaded] = useState(false);
+  const [currentFavicon, setCurrentFavicon] = useState<string>("");
   
   // Reset error when URL changes
   useEffect(() => {
     setFaviconError(false);
     setFaviconLoaded(false);
-    console.log("Favicon URL mise à jour:", faviconUrl?.substring(0, 30) + "...");
+    
+    // Ensure favicon URL is fully qualified
+    const defaultFavicon = "/lovable-uploads/94c4ec86-49e9-498e-8fd3-ecdc693ca9fd.png";
+    
+    if (faviconUrl) {
+      // Ensure URL is properly formatted
+      const fullUrl = faviconUrl.startsWith('http') || faviconUrl.startsWith('/lovable-uploads/') 
+        ? faviconUrl 
+        : `/lovable-uploads/${faviconUrl.replace(/^\//, '')}`;
+        
+      console.log("Favicon URL mise à jour:", fullUrl.substring(0, 30) + "...");
+      setCurrentFavicon(fullUrl);
+    } else {
+      console.log("Utilisation du favicon par défaut");
+      setCurrentFavicon(defaultFavicon);
+    }
     
     // Apply favicon directly to document
-    if (faviconUrl) {
-      let faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement;
-      if (!faviconLink) {
-        faviconLink = document.createElement('link');
-        faviconLink.rel = 'icon';
-        document.head.appendChild(faviconLink);
-      }
-      faviconLink.href = faviconUrl;
-      faviconLink.type = 'image/png';
-      console.log('Favicon applied from component:', faviconUrl);
+    const faviconLink = document.querySelector('link[rel="icon"]') as HTMLLinkElement || document.createElement('link');
+    faviconLink.rel = 'icon';
+    faviconLink.href = currentFavicon || defaultFavicon;
+    faviconLink.type = 'image/png';
+    
+    if (!document.querySelector('link[rel="icon"]')) {
+      document.head.appendChild(faviconLink);
     }
-  }, [faviconUrl]);
+    
+    console.log('Favicon applied from component:', faviconLink.href);
+  }, [faviconUrl, currentFavicon]);
   
   return (
     <div>
       <div className="flex items-center space-x-4 mt-1">
         <div className="h-16 w-16 flex items-center justify-center overflow-hidden bg-gray-50 rounded-lg">
-          {!faviconError ? (
+          {!faviconError && currentFavicon ? (
             <img 
               key={`favicon-${Date.now()}`}
-              src={faviconUrl || "/lovable-uploads/94c4ec86-49e9-498e-8fd3-ecdc693ca9fd.png"} 
+              src={currentFavicon} 
               alt="Favicon" 
               className="h-full w-auto object-contain"
               onLoad={() => setFaviconLoaded(true)}
@@ -52,6 +67,8 @@ export const FaviconSection: React.FC<FaviconSectionProps> = ({
                 setFaviconError(true);
                 console.error("Erreur de chargement du favicon");
                 toast.error("Erreur de chargement du favicon");
+                // Try to load default favicon
+                setCurrentFavicon("/lovable-uploads/94c4ec86-49e9-498e-8fd3-ecdc693ca9fd.png");
               }}
               style={{ display: faviconLoaded ? 'block' : 'none' }}
             />

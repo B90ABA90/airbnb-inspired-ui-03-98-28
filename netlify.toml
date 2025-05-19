@@ -6,12 +6,30 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Configuration des redirections pour les Single-Page Applications
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
+# Configuration des en-têtes pour améliorer la mise en cache
 [[headers]]
   for = "/*"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+    
+# Configuration spécifique pour les images et ressources statiques
+[[headers]]
+  for = "/lovable-uploads/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
