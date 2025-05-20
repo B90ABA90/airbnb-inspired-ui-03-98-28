@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Job } from '@/types/job';
 import { Button } from '@/components/ui/button';
@@ -41,15 +40,15 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({ job, onSuccess
     setIsSubmitting(true);
     
     try {
-      // Utiliser la mutation pour soumettre la candidature
-      // Cela garantit à la fois la mise à jour de Supabase et l'invalidation du cache React Query
+      // Include submittedAt field with current timestamp
       await applyForJob.mutateAsync({
         jobId: job.id, 
         application: {
           applicantName: name,
           email,
           phone,
-          coverLetter
+          coverLetter,
+          submittedAt: new Date().toISOString() // Add the missing required field
         }
       });
       
