@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Job } from '@/types/job';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useJobsService } from '@/services/jobsService';
+import { useJobsMutations } from '@/hooks/useJobsMutations';
 
 interface ApplicationFormProps {
   job: Job;
@@ -21,6 +23,7 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({ job, onSuccess
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { submitApplication } = useJobsService();
+  const { applyForJob } = useJobsMutations(); // Utiliser les mutations pour une meilleure intégration avec React Query
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,31 +41,31 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({ job, onSuccess
     setIsSubmitting(true);
     
     try {
-      const result = await submitApplication({
-        jobId: job.id,
-        name,
-        email,
-        phone,
-        coverLetter
+      // Utiliser la mutation pour soumettre la candidature
+      // Cela garantit à la fois la mise à jour de Supabase et l'invalidation du cache React Query
+      await applyForJob.mutateAsync({
+        jobId: job.id, 
+        application: {
+          applicantName: name,
+          email,
+          phone,
+          coverLetter
+        }
       });
       
-      if (result) {
-        toast({
-          title: "Candidature envoyée !",
-          description: "Votre candidature a été soumise avec succès."
-        });
-        
-        // Reset form
-        setName('');
-        setEmail('');
-        setPhone('');
-        setCoverLetter('');
-        
-        // Notify parent
-        onSuccess();
-      } else {
-        throw new Error("Échec de la soumission");
-      }
+      toast({
+        title: "Candidature envoyée !",
+        description: "Votre candidature a été soumise avec succès."
+      });
+      
+      // Reset form
+      setName('');
+      setEmail('');
+      setPhone('');
+      setCoverLetter('');
+      
+      // Notify parent
+      onSuccess();
     } catch (error) {
       console.error("Erreur lors de la soumission:", error);
       toast({

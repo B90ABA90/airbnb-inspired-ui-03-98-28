@@ -10,29 +10,163 @@ import { Json } from "@/integrations/supabase/types";
  */
 export const useJobsService = () => {
   /**
-   * Charge les jobs depuis le stockage local (fallback)
+   * Charge les jobs depuis Supabase
    */
   const loadJobs = async (): Promise<Job[]> => {
     try {
-      const storedJobs = localStorage.getItem("jobs");
-      if (storedJobs) {
-        return JSON.parse(storedJobs);
+      const { data, error } = await supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Erreur lors du chargement des jobs depuis Supabase:", error);
+        return loadJobsFromLocalStorage();
       }
-      return [];
+
+      if (!data || data.length === 0) {
+        console.log("Aucun job trouvé dans Supabase, utilisation du stockage local");
+        return loadJobsFromLocalStorage();
+      }
+
+      console.log("Jobs chargés depuis Supabase:", data.length);
+      return data.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        domain: item.domain,
+        description: item.description,
+        requirements: item.requirements || "",
+        contract: item.contract,
+        location: item.location,
+        salary: item.salary || { amount: 0, currency: "FCFA" },
+        positions: item.positions || 1,
+        publishDate: item.publish_date || new Date().toISOString().split('T')[0],
+        deadline: item.deadline,
+        status: item.status || "active",
+        images: item.images || [],
+        image: item.image || "",
+        price: item.price,
+        bedrooms: item.bedrooms,
+        bathrooms: item.bathrooms,
+        isHousingOffer: item.is_housing_offer || false,
+        applications: item.applications || []
+      }));
     } catch (error) {
-      console.error("Erreur lors du chargement des jobs locaux:", error);
-      return [];
+      console.error("Erreur lors du chargement des jobs:", error);
+      return loadJobsFromLocalStorage();
     }
   };
 
   /**
-   * Sauvegarde les jobs dans le stockage local (fallback)
+   * Charge les jobs depuis le stockage local (fallback)
    */
-  const saveJobs = (jobs: Job[]): void => {
+  const loadJobsFromLocalStorage = (): Promise<Job[]> => {
     try {
+      const storedJobs = localStorage.getItem("jobs");
+      if (storedJobs) {
+        return Promise.resolve(JSON.parse(storedJobs));
+      }
+      return Promise.resolve([]);
+    } catch (error) {
+      console.error("Erreur lors du chargement des jobs locaux:", error);
+      return Promise.resolve([]);
+    }
+  };
+
+  /**
+   * Sauvegarde les jobs dans Supabase et localStorage comme fallback
+   */
+  const saveJobs = async (jobs: Job[]): Promise<boolean> => {
+    try {
+      // Sauvegarde dans le stockage local comme fallback
       localStorage.setItem("jobs", JSON.stringify(jobs));
+      
+      // Pour chaque job, mise à jour ou insertion dans Supabase
+      for (const job of jobs) {
+        // Transformation des applications en format Json compatible
+        const formattedApplications = job.applications 
+          ? job.applications.map(app => ({
+              id: app.id,
+              jobId: app.jobId,
+              applicantName: app.applicantName,
+              email: app.email,
+              phone: app.phone,
+              resume: app.resume || null,
+              coverLetter: app.coverLetter || null,
+              status: app.status,
+              submittedAt: app.submittedAt
+            }))
+          : [];
+
+        // Vérifier si le job existe déjà
+        const { data: existingJob } = await supabase
+          .from("jobs")
+          .select("id")
+          .eq("id", job.id)
+          .single();
+
+        if (existingJob) {
+          // Mise à jour
+          const { error: updateError } = await supabase
+            .from("jobs")
+            .update({
+              title: job.title,
+              domain: job.domain,
+              description: job.description,
+              requirements: job.requirements,
+              contract: job.contract,
+              location: job.location,
+              salary: job.salary,
+              positions: job.positions,
+              publish_date: job.publishDate,
+              deadline: job.deadline,
+              status: job.status,
+              images: job.images,
+              image: job.image,
+              price: job.price,
+              bedrooms: job.bedrooms,
+              bathrooms: job.bathrooms,
+              is_housing_offer: job.isHousingOffer,
+              applications: formattedApplications as unknown as Json[]
+            })
+            .eq("id", job.id);
+
+          if (updateError) throw updateError;
+        } else {
+          // Insertion
+          const { error: insertError } = await supabase
+            .from("jobs")
+            .insert({
+              id: job.id,
+              title: job.title,
+              domain: job.domain,
+              description: job.description,
+              requirements: job.requirements,
+              contract: job.contract,
+              location: job.location,
+              salary: job.salary,
+              positions: job.positions,
+              publish_date: job.publishDate,
+              deadline: job.deadline,
+              status: job.status,
+              images: job.images,
+              image: job.image,
+              price: job.price,
+              bedrooms: job.bedrooms,
+              bathrooms: job.bathrooms,
+              is_housing_offer: job.isHousingOffer,
+              applications: formattedApplications as unknown as Json[]
+            });
+
+          if (insertError) throw insertError;
+        }
+      }
+      
+      console.log("Jobs sauvegardés dans Supabase et localStorage:", jobs.length);
+      return true;
     } catch (error) {
       console.error("Erreur lors de la sauvegarde des jobs:", error);
+      return false;
     }
   };
 
@@ -80,23 +214,36 @@ export const useJobsService = () => {
 
       if (updateError) throw updateError;
 
+      toast.success("Candidature soumise avec succès");
       return true;
     } catch (error) {
       console.error("Erreur lors de la candidature:", error);
+      toast.error("Erreur lors de la soumission de la candidature");
       return false;
     }
   };
 
   /**
-   * Purge toutes les images des jobs du stockage local
+   * Purge toutes les données des jobs
    */
-  const purgeAllJobs = () => {
+  const purgeAllJobs = async (): Promise<boolean> => {
     try {
+      // Supprimer du stockage local
       localStorage.removeItem("jobs");
-      toast.success("Toutes les données des offres ont été supprimées localement");
+      
+      // Supprimer de Supabase (attention, cela supprime tous les jobs)
+      const { error } = await supabase
+        .from("jobs")
+        .delete()
+        .neq("id", "placeholder"); // Cette condition est toujours vraie, donc supprime tout
+      
+      if (error) throw error;
+      
+      toast.success("Toutes les données des offres ont été supprimées");
       return true;
     } catch (error) {
       console.error("Erreur lors de la suppression des jobs:", error);
+      toast.error("Erreur lors de la suppression des jobs");
       return false;
     }
   };
