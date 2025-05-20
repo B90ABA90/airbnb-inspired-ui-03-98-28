@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Job } from '@/types/job';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,7 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({ job, onSuccess
     setIsSubmitting(true);
     
     try {
-      await submitApplication({
+      const result = await submitApplication({
         jobId: job.id,
         name,
         email,
@@ -47,20 +46,23 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({ job, onSuccess
         coverLetter
       });
       
-      toast({
-        title: "Candidature envoyée !",
-        description: "Votre candidature a été soumise avec succès."
-      });
-      
-      // Reset form
-      setName('');
-      setEmail('');
-      setPhone('');
-      setCoverLetter('');
-      
-      // Notify parent
-      onSuccess();
-      
+      if (result) {
+        toast({
+          title: "Candidature envoyée !",
+          description: "Votre candidature a été soumise avec succès."
+        });
+        
+        // Reset form
+        setName('');
+        setEmail('');
+        setPhone('');
+        setCoverLetter('');
+        
+        // Notify parent
+        onSuccess();
+      } else {
+        throw new Error("Échec de la soumission");
+      }
     } catch (error) {
       console.error("Erreur lors de la soumission:", error);
       toast({

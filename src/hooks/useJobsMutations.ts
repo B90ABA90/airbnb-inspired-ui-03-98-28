@@ -4,6 +4,22 @@ import { Job, JobApplication } from "@/types/job";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
+
+// Fonction utilitaire pour convertir JobApplication en objet compatible Json
+const convertApplicationToJson = (application: JobApplication): Record<string, unknown> => {
+  return {
+    id: application.id,
+    jobId: application.jobId,
+    applicantName: application.applicantName,
+    email: application.email,
+    phone: application.phone,
+    resume: application.resume || null,
+    coverLetter: application.coverLetter || null,
+    status: application.status,
+    submittedAt: application.submittedAt
+  };
+};
 
 export const useJobsMutations = () => {
   const queryClient = useQueryClient();
@@ -13,15 +29,20 @@ export const useJobsMutations = () => {
     mutationFn: async (newJob: Omit<Job, "id">) => {
       try {
         // Générer un ID si nécessaire
-        const jobWithId = {
+        const jobWithId: Job = {
           ...newJob,
           id: uuidv4()
         };
 
+        // Transformer les applications en format Json compatible
+        const formattedApplications = jobWithId.applications 
+          ? jobWithId.applications.map(app => convertApplicationToJson(app))
+          : [];
+
         // Insertion dans Supabase
         const { data, error } = await supabase
           .from("jobs")
-          .insert([{
+          .insert({
             id: jobWithId.id,
             title: jobWithId.title,
             domain: jobWithId.domain,
@@ -40,8 +61,8 @@ export const useJobsMutations = () => {
             bedrooms: jobWithId.bedrooms,
             bathrooms: jobWithId.bathrooms,
             is_housing_offer: jobWithId.isHousingOffer,
-            applications: jobWithId.applications || []
-          }])
+            applications: formattedApplications as unknown as Json[]
+          })
           .select();
 
         if (error) throw error;
@@ -66,6 +87,11 @@ export const useJobsMutations = () => {
   const updateJob = useMutation({
     mutationFn: async (updatedJob: Job) => {
       try {
+        // Transformer les applications en format Json compatible
+        const formattedApplications = updatedJob.applications 
+          ? updatedJob.applications.map(app => convertApplicationToJson(app))
+          : [];
+
         const { data, error } = await supabase
           .from("jobs")
           .update({
@@ -86,7 +112,7 @@ export const useJobsMutations = () => {
             bedrooms: updatedJob.bedrooms,
             bathrooms: updatedJob.bathrooms,
             is_housing_offer: updatedJob.isHousingOffer,
-            applications: updatedJob.applications
+            applications: formattedApplications as unknown as Json[]
           })
           .eq("id", updatedJob.id)
           .select();
@@ -156,14 +182,17 @@ export const useJobsMutations = () => {
           ...application
         };
 
+        // Convertir en format compatible avec Json
+        const formattedNewApplication = convertApplicationToJson(newApplication);
+
         // Ajouter la candidature à la liste existante
         const applications = Array.isArray(jobData.applications) ? jobData.applications : [];
-        const updatedApplications = [...applications, newApplication];
+        const updatedApplications = [...applications, formattedNewApplication];
 
         // Mettre à jour le job
         const { error: updateError } = await supabase
           .from("jobs")
-          .update({ applications: updatedApplications })
+          .update({ applications: updatedApplications as unknown as Json[] })
           .eq("id", jobId);
 
         if (updateError) throw updateError;

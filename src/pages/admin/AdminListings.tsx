@@ -63,7 +63,8 @@ const AdminListings = () => {
   const handleClearAllImages = async () => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer toutes les images de tous les logements? Cette action est irréversible.")) {
       try {
-        await clearAllListingImages.mutateAsync();
+        // Correction: clearAllListingImages retourne un objet avec mutateAsync
+        await clearAllListingImages().mutateAsync();
       } catch (error) {
         console.error('Error clearing images:', error);
         toast.error("Erreur lors de la suppression des images");

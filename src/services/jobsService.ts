@@ -1,7 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Job } from "@/types/job";
+import { Job, JobApplication } from "@/types/job";
 import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+import { Json } from "@/integrations/supabase/types";
 
 /**
  * Service pour gérer les opérations liées aux offres d'emploi
@@ -35,6 +37,57 @@ export const useJobsService = () => {
   };
 
   /**
+   * Soumet une candidature pour un job
+   */
+  const submitApplication = async (application: {
+    jobId: string;
+    name: string;
+    email: string;
+    phone: string;
+    coverLetter: string;
+  }): Promise<boolean> => {
+    try {
+      // Récupérer le job actuel
+      const { data: jobData, error: fetchError } = await supabase
+        .from("jobs")
+        .select("applications")
+        .eq("id", application.jobId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Préparer la nouvelle candidature
+      const newApplication = {
+        id: uuidv4(),
+        jobId: application.jobId,
+        applicantName: application.name,
+        email: application.email,
+        phone: application.phone,
+        coverLetter: application.coverLetter,
+        status: "pending",
+        submittedAt: new Date().toISOString()
+      };
+
+      // Ajouter la candidature à la liste existante
+      const applications = Array.isArray(jobData.applications) ? jobData.applications : [];
+      const updatedApplications = [...applications, newApplication];
+
+      // Mettre à jour le job
+      const { error: updateError } = await supabase
+        .from("jobs")
+        .update({ applications: updatedApplications })
+        .eq("id", application.jobId);
+
+      if (updateError) throw updateError;
+
+      return true;
+    } catch (error) {
+      console.error("Erreur lors de la candidature:", error);
+      return false;
+    }
+  };
+
+  /**
    * Purge toutes les images des jobs du stockage local
    */
   const purgeAllJobs = () => {
@@ -51,6 +104,7 @@ export const useJobsService = () => {
   return {
     loadJobs,
     saveJobs,
-    purgeAllJobs
+    purgeAllJobs,
+    submitApplication
   };
 };
