@@ -31,24 +31,56 @@ export const useJobs = () => {
         console.log("Jobs récupérés depuis Supabase:", supabaseData.length);
         
         // Mapper les données pour s'assurer qu'elles respectent le format Job
-        const mappedJobs: Job[] = supabaseData.map(job => ({
-          id: job.id,
-          title: job.title,
-          domain: job.domain,
-          description: job.description,
-          contract: job.contract,
-          location: job.location,
-          deadline: job.deadline,
-          images: job.images || [],
-          image: job.image,
-          status: job.status || 'active',
-          applications: job.applications || [],
-          publishDate: job.publish_date || new Date().toISOString().split('T')[0],
-          isHousingOffer: job.is_housing_offer || false,
-          requirements: job.requirements || '',
-          positions: job.positions || 1, // Ensure positions is always mapped
-          salary: job.salary ? job.salary : { amount: 0, currency: 'FCFA' }
-        }));
+        const mappedJobs: Job[] = supabaseData.map(job => {
+          // Conversion du salaire au bon format
+          let formattedSalary = { amount: 0, currency: 'FCFA' };
+          
+          if (job.salary) {
+            // Si c'est déjà un objet avec les bonnes propriétés
+            if (typeof job.salary === 'object' && 'amount' in job.salary && 'currency' in job.salary) {
+              formattedSalary = {
+                amount: Number(job.salary.amount) || 0,
+                currency: job.salary.currency || 'FCFA'
+              };
+            } 
+            // Si c'est un nombre, on l'utilise comme montant
+            else if (typeof job.salary === 'number') {
+              formattedSalary = {
+                amount: job.salary,
+                currency: 'FCFA'
+              };
+            }
+            // Si c'est une chaîne, on essaie de la parser
+            else if (typeof job.salary === 'string' && !isNaN(Number(job.salary))) {
+              formattedSalary = {
+                amount: Number(job.salary),
+                currency: 'FCFA'
+              };
+            }
+          }
+          
+          return {
+            id: job.id,
+            title: job.title,
+            domain: job.domain,
+            description: job.description,
+            contract: job.contract,
+            location: job.location,
+            deadline: job.deadline,
+            images: job.images || [],
+            image: job.image,
+            status: job.status || 'active',
+            applications: job.applications || [],
+            publishDate: job.publish_date || new Date().toISOString().split('T')[0],
+            isHousingOffer: job.is_housing_offer || false,
+            requirements: job.requirements || '',
+            positions: job.positions || 1,
+            salary: formattedSalary,
+            price: job.price || 0,
+            bedrooms: job.bedrooms || 0,
+            bathrooms: job.bathrooms || 0
+          };
+        });
         
         return mappedJobs;
       } else {
