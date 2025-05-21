@@ -8,6 +8,8 @@ import { CheckCircle2, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SupabaseTest = () => {
+  const supabaseUrl = "https://sbecbqeqkcjdoeznnwhv.supabase.co";
+  
   return (
     <div className="flex h-screen bg-gray-100">
       <AdminSidebar />
@@ -21,7 +23,7 @@ const SupabaseTest = () => {
             <AlertTitle>Projet Supabase connecté</AlertTitle>
             <AlertDescription>
               Votre application est configurée pour se connecter à Supabase. 
-              URL: {supabase.supabaseUrl}
+              URL: {supabaseUrl}
             </AlertDescription>
           </Alert>
           

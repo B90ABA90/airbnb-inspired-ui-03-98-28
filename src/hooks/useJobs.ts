@@ -46,7 +46,8 @@ export const useJobs = () => {
           publishDate: job.publish_date || new Date().toISOString().split('T')[0],
           isHousingOffer: job.is_housing_offer || false,
           requirements: job.requirements || '',
-          salary: job.salary || { amount: 0, currency: 'FCFA' }
+          positions: job.positions || 1, // Ensure positions is always mapped
+          salary: job.salary ? job.salary : { amount: 0, currency: 'FCFA' }
         }));
         
         return mappedJobs;
@@ -84,9 +85,11 @@ export const useJobs = () => {
     retry: 3,          // Réessayer 3 fois en cas d'échec
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    onError: (err) => {
-      console.error("Erreur React Query:", err);
-      toast.error("Impossible de charger les offres. Veuillez réessayer.");
+    meta: {
+      onError: (err: any) => {
+        console.error("Erreur React Query:", err);
+        toast.error("Impossible de charger les offres. Veuillez réessayer.");
+      }
     }
   });
   
