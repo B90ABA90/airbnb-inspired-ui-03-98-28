@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useJobsService } from "@/services/jobsService";
 import { useJobsMutations } from "@/hooks/useJobsMutations";
 import { Job } from "@/types/job";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 export const useJobs = () => {
   const { loadJobs, purgeAllJobs } = useJobsService();
@@ -11,26 +14,99 @@ export const useJobs = () => {
   // Requête pour obtenir tous les jobs depuis Supabase
   const fetchJobs = async (): Promise<Job[]> => {
     try {
-      // Utiliser directement la fonction loadJobs du service
-      // qui gère maintenant correctement la récupération depuis Supabase 
-      // avec fallback vers localStorage
-      const jobs = await loadJobs();
-      console.log("Jobs récupérés:", jobs?.length || 0);
-      return jobs;
+      console.log("Chargement des jobs depuis Supabase...");
+      
+      // Tentative de récupération depuis Supabase
+      const { data: supabaseData, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Erreur Supabase:", error);
+        throw error;
+      }
+      
+      if (supabaseData && supabaseData.length > 0) {
+        console.log("Jobs récupérés depuis Supabase:", supabaseData.length);
+        
+        // Mapper les données pour s'assurer qu'elles respectent le format Job
+        const mappedJobs: Job[] = supabaseData.map(job => ({
+          id: job.id,
+          title: job.title,
+          domain: job.domain,
+          description: job.description,
+          contract: job.contract,
+          location: job.location,
+          deadline: job.deadline,
+          images: job.images || [],
+          image: job.image,
+          status: job.status || 'active',
+          applications: job.applications || [],
+          publishDate: job.publish_date || new Date().toISOString().split('T')[0],
+          isHousingOffer: job.is_housing_offer || false,
+          requirements: job.requirements || '',
+          salary: job.salary || { amount: 0, currency: 'FCFA' }
+        }));
+        
+        return mappedJobs;
+      } else {
+        // Fallback à localStorage si Supabase ne renvoie pas de données
+        console.log("Aucune donnée sur Supabase, fallback à localStorage");
+        const jobs = await loadJobs();
+        return jobs || [];
+      }
     } catch (error) {
       console.error("Erreur lors du chargement des jobs:", error);
-      return [];
+      // Fallback à localStorage en cas d'erreur
+      console.log("Fallback à localStorage suite à une erreur");
+      try {
+        const jobs = await loadJobs();
+        return jobs || [];
+      } catch (fallbackError) {
+        console.error("Erreur également avec le fallback:", fallbackError);
+        return [];
+      }
     }
   };
 
-  const { data: jobs = [], isLoading, error, refetch } = useQuery({
+  // Configuration avancée de la requête avec React Query
+  const { 
+    data: jobs = [], 
+    isLoading, 
+    error, 
+    refetch
+  } = useQuery({
     queryKey: ["jobs"],
     queryFn: fetchJobs,
-    staleTime: 60000,  // 1 minute
+    staleTime: 30000,  // 30 secondes
     gcTime: 300000,    // 5 minutes
+    retry: 3,          // Réessayer 3 fois en cas d'échec
     refetchOnMount: true,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    onError: (err) => {
+      console.error("Erreur React Query:", err);
+      toast.error("Impossible de charger les offres. Veuillez réessayer.");
+    }
   });
+  
+  // Abonnement aux mises à jour temps réel de Supabase
+  useEffect(() => {
+    const channel = supabase
+      .channel('jobs-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'jobs' }, 
+        (payload) => {
+          console.log('Changement détecté dans la table jobs:', payload);
+          refetch();
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   return {
     jobs,

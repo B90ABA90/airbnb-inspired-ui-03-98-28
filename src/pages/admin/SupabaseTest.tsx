@@ -3,6 +3,9 @@ import React from 'react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminTopbar } from '@/components/admin/AdminTopbar';
 import { SupabaseConnectionTest } from '@/components/admin/supabase/ConnectionTest';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CheckCircle2, Info } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const SupabaseTest = () => {
   return (
@@ -12,6 +15,16 @@ const SupabaseTest = () => {
         <AdminTopbar />
         <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           <h1 className="text-2xl font-bold mb-6">Test de connexion à Supabase</h1>
+          
+          <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-800">
+            <Info className="h-5 w-5" />
+            <AlertTitle>Projet Supabase connecté</AlertTitle>
+            <AlertDescription>
+              Votre application est configurée pour se connecter à Supabase. 
+              URL: {supabase.supabaseUrl}
+            </AlertDescription>
+          </Alert>
+          
           <p className="text-gray-600 mb-8">
             Cette page vous permet de tester la connexion à Supabase et de vérifier que vous pouvez publier des données.
             Si les tests passent avec succès, vous pourrez utiliser toutes les fonctionnalités liées à la base de données.
@@ -53,6 +66,18 @@ const SupabaseTest = () => {
   })
   .select();`}
                 </pre>
+              </div>
+              
+              <div>
+                <h3 className="font-medium">4. Configuration Netlify</h3>
+                <p className="text-sm text-gray-500 mt-1 mb-2">
+                  Pour que tout fonctionne correctement sur Netlify, assurez-vous que :
+                </p>
+                <ul className="list-disc pl-5 text-sm text-gray-500">
+                  <li>Netlify est configuré avec Node.js version 18 ou plus</li>
+                  <li>Les redirections sont correctement configurées dans votre fichier netlify.toml</li>
+                  <li>Vous publiez les dernières modifications</li>
+                </ul>
               </div>
             </div>
           </div>

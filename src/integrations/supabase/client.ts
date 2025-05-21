@@ -13,6 +13,30 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    storage: localStorage
+  },
+  global: {
+    headers: {
+      'x-application-name': 'SH Job Center'
+    }
+  },
+  // Ajouter un meilleur comportement de reconnexion
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 });
+
+// Fonction pour vérifier la connectivité
+export const checkSupabaseConnection = async () => {
+  try {
+    // Simple requête pour vérifier si Supabase répond
+    const { data, error } = await supabase.from('jobs').select('id').limit(1);
+    return { success: !error, error: error ? error.message : null };
+  } catch (err: any) {
+    console.error('Erreur de connexion à Supabase:', err);
+    return { success: false, error: err.message };
+  }
+};
