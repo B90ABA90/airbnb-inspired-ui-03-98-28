@@ -17,14 +17,15 @@ export const SupabaseConnectionTest: React.FC = () => {
       setMessage('Vérification de la connexion à Supabase...');
       
       // Test simple pour vérifier la connexion
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('jobs')
-        .select('count(*)', { count: 'exact', head: true });
+        .select('*', { count: 'exact' })
+        .limit(1);
       
       if (error) throw error;
       
       setConnectionStatus('success');
-      setMessage(`Connexion réussie ! Nombre d'offres dans la base: ${data.count || 0}`);
+      setMessage(`Connexion réussie ! Nombre d'offres dans la base: ${count || 0}`);
       toast.success('Connexion à Supabase réussie !');
     } catch (error: any) {
       console.error('Erreur lors du test de connexion:', error);
