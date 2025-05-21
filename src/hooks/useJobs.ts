@@ -40,7 +40,7 @@ export const useJobs = () => {
             if (typeof job.salary === 'object' && 'amount' in job.salary && 'currency' in job.salary) {
               formattedSalary = {
                 amount: Number(job.salary.amount) || 0,
-                currency: job.salary.currency || 'FCFA'
+                currency: typeof job.salary.currency === 'string' ? job.salary.currency : 'FCFA'
               };
             } 
             // Si c'est un nombre, on l'utilise comme montant
@@ -59,6 +59,10 @@ export const useJobs = () => {
             }
           }
           
+          // Validation du statut pour s'assurer qu'il correspond au type attendu
+          const validStatus: "active" | "closed" = 
+            job.status === 'closed' ? 'closed' : 'active';
+          
           return {
             id: job.id,
             title: job.title,
@@ -69,7 +73,7 @@ export const useJobs = () => {
             deadline: job.deadline,
             images: job.images || [],
             image: job.image,
-            status: job.status || 'active',
+            status: validStatus,
             applications: job.applications || [],
             publishDate: job.publish_date || new Date().toISOString().split('T')[0],
             isHousingOffer: job.is_housing_offer || false,
