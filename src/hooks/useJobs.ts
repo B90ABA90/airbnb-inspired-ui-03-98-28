@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useJobsService } from "@/services/jobsService";
 import { useJobsMutations } from "@/hooks/useJobsMutations";
-import { Job } from "@/types/job";
+import { Job, JobApplication } from "@/types/job";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect } from "react";
@@ -63,6 +63,38 @@ export const useJobs = () => {
           const validStatus: "active" | "closed" = 
             job.status === 'closed' ? 'closed' : 'active';
           
+          // Mapper les applications pour qu'elles correspondent au type JobApplication
+          const mappedApplications: JobApplication[] = Array.isArray(job.applications)
+            ? job.applications.map((app: any) => {
+                // Vérifier si l'application est déjà au bon format
+                if (typeof app === 'object' && app !== null) {
+                  return {
+                    id: app.id || `app-${Math.random().toString(36).substr(2, 9)}`,
+                    jobId: app.jobId || job.id,
+                    applicantName: app.applicantName || app.name || '',
+                    email: app.email || '',
+                    phone: app.phone || '',
+                    resume: app.resume || undefined,
+                    coverLetter: app.coverLetter || '',
+                    status: (app.status === 'approved' || app.status === 'rejected' || app.status === 'pending') 
+                      ? app.status 
+                      : 'pending',
+                    submittedAt: app.submittedAt || new Date().toISOString()
+                  };
+                }
+                // Fallback pour les formats non conformes
+                return {
+                  id: `app-${Math.random().toString(36).substr(2, 9)}`,
+                  jobId: job.id,
+                  applicantName: '',
+                  email: '',
+                  phone: '',
+                  status: 'pending',
+                  submittedAt: new Date().toISOString()
+                };
+              })
+            : [];
+          
           return {
             id: job.id,
             title: job.title,
@@ -74,7 +106,7 @@ export const useJobs = () => {
             images: job.images || [],
             image: job.image,
             status: validStatus,
-            applications: job.applications || [],
+            applications: mappedApplications,
             publishDate: job.publish_date || new Date().toISOString().split('T')[0],
             isHousingOffer: job.is_housing_offer || false,
             requirements: job.requirements || '',
