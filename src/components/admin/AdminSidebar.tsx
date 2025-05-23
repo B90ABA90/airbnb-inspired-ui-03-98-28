@@ -1,6 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { SidebarNav } from "@/components/ui/sidebar-nav";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 export const AdminSidebar = () => {
-  const { toggleSidebar, isSidebarOpen } = useSidebar();
+  const { expanded, setExpanded, toggle } = useSidebar();
   const navigate = useNavigate();
   const [activeItem, setActiveItem] = useState('dashboard');
   const { logout } = useAuth();
@@ -106,18 +106,31 @@ export const AdminSidebar = () => {
   ];
 
   return (
-    <Sheet open={isSidebarOpen} onOpenChange={toggleSidebar}>
+    <Sheet open={expanded} onOpenChange={setExpanded}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <LayoutDashboard className="h-5 w-5" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-80 border-r p-0 pt-6">
-        <SidebarNav items={menuItems} activeItem={activeItem} onNavigate={(path) => {
-          navigate(path);
-          toggleSidebar(false);
-          setActiveItem(path.split('/')[2] || 'dashboard');
-        }} />
+        <nav className="space-y-1 px-2">
+          {menuItems.map((item) => (
+            <div key={item.key} className="mb-1">
+              <Button
+                variant={activeItem === item.key ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => {
+                  navigate(item.path);
+                  setExpanded(false);
+                  setActiveItem(item.path.split('/')[2] || 'dashboard');
+                }}
+              >
+                <span className="mr-2">{item.icon}</span>
+                {item.title}
+              </Button>
+            </div>
+          ))}
+        </nav>
         <div className="p-4">
           <Button variant="outline" className="w-full" onClick={logout}>
             Déconnexion

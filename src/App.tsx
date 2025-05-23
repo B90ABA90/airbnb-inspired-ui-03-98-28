@@ -40,6 +40,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminSupport from './pages/admin/AdminSupport';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminMessages from './pages/admin/AdminMessages';
+import AdminStatus from './pages/admin/AdminStatus';
 import SupabaseTest from './pages/admin/SupabaseTest';
 import MySQLTest from './pages/admin/MySQLTest';
 
@@ -147,6 +148,11 @@ function App() {
           <Route path="/admin/messages" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminMessages />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/status" element={
+            <ProtectedRoute requireAdmin={true}>
+              <AdminStatus />
             </ProtectedRoute>
           } />
           <Route path="/admin/supabase-test" element={
