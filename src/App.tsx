@@ -40,6 +40,8 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminSupport from './pages/admin/AdminSupport';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminMessages from './pages/admin/AdminMessages';
+import SupabaseTest from './pages/admin/SupabaseTest';
+import MySQLTest from './pages/admin/MySQLTest';
 
 import { CompareListings } from './components/CompareListings';
 import { useEffect } from 'react';
@@ -145,6 +147,16 @@ function App() {
           <Route path="/admin/messages" element={
             <ProtectedRoute requireAdmin={true}>
               <AdminMessages />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/supabase-test" element={
+            <ProtectedRoute requireAdmin={true}>
+              <SupabaseTest />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/mysql-test" element={
+            <ProtectedRoute requireAdmin={true}>
+              <MySQLTest />
             </ProtectedRoute>
           } />
           
